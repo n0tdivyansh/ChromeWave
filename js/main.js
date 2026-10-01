@@ -165,6 +165,7 @@
         case 'perfect': A.play('perfect'); if (v) H.msg(v, 'PERFECT START!', { col: '#46d98a', dur: 1.6 }); break;
         case 'spin': if (v) H.msg(v, 'WHEELSPIN: TOO MANY REVS', { col: '#ff3b3b', slot: 'low', dur: 1.4 }); break;
         case 'nitro': A.play('nitro'); if (v) { H.msg(v, 'NITRO', { col: '#7fd0ff', dur: 0.9 }); v.cam.shake = Math.max(v.cam.shake, 0.35); } break;
+        case 'drift': if (v) { A.play('nitroPick'); H.msg(v, 'DRIFT +' + Math.round(e.gain * 100) + '%', { col: '#7fd0ff', slot: 'low', dur: 1.1 }); } break;
         case 'shift': A.play('shift'); break;
         case 'backfire': A.play('pop', e.soft ? 0.55 : 1); break;
         case 'lap': {
@@ -193,7 +194,7 @@
           if (!v) break;
           if (e.kind === 'coin') { A.play('coin'); H.float(v, '+' + U.money(e.value)); R.burst(v, 'coin', 10); }
           else if (e.kind === 'fuel') { A.play('fuel'); H.msg(v, '+ FUEL', { col: '#ff6a5a', slot: 'low', dur: 1.2 }); }
-          else if (e.kind === 'nitro') { A.play('nitroPick'); H.msg(v, '+1 NITRO', { col: '#7fd0ff', slot: 'low', dur: 1.2 }); }
+          else if (e.kind === 'nitro') { A.play('nitroPick'); H.msg(v, '+ NITRO', { col: '#7fd0ff', slot: 'low', dur: 1.2 }); }
           break;
         case 'lowfuel': A.play('lowfuel'); if (v) H.msg(v, 'LOW FUEL', { col: '#ff3b3b', slot: 'low', dur: 2.2 }); break;
         case 'posUp': A.play('posUp'); if (v) H.msg(v, '▲ ' + U.ord(e.pos), { slot: 'pos', col: '#46d98a', dur: 1.2 }); break;
@@ -349,7 +350,7 @@
     if (q.get('unlock')) S().unlocked = +q.get('unlock');
     if (q.get('quality')) { S().settings.quality = q.get('quality'); TG.Render.resize(); }
     if (q.get('race')) {
-      const carId = q.get('car') || 'mustang';
+      const carId = q.get('car') || 'kaito';
       if (!S().cars[carId]) S().cars[carId] = { color: TG.CAR[carId].color, up: {} };
       const cfg = { mode: q.get('mode') || 'quick', trackId: q.get('race'), laps: +(q.get('laps') || 3), rivals: +(q.get('rivals') || 11), players: [TG.UI.carCfg(carId, 'solo', 'You')] };
       if (q.get('p2')) { cfg.mode = 'versus'; cfg.players[0].profile = 'p1'; const c2 = q.get('p2'); if (!S().cars[c2]) S().cars[c2] = { color: TG.CAR[c2].color, up: {} }; cfg.players.push(TG.UI.carCfg(c2, 'p2', 'Player 2')); cfg.players[1].color = '#7cc9d9'; }

@@ -11,8 +11,8 @@
     return {
       v: 1,
       money: TG.ECON.start,
-      cars: { mustang: { color: TG.CAR.mustang.color, up: {} } },
-      active: 'mustang',
+      cars: { kaito: { color: TG.CAR.kaito.color, up: {} } },
+      active: 'kaito',
       unlocked: 1,
       cups: TG.CUPS.map(() => ({ trophy: 0, run: null })),
       records: {},
@@ -21,7 +21,7 @@
       keys: TG.Input.defaultKeys(),
       stats: { races: 0, wins: 0, earned: 0 },
       quick: { track: 'vegas', laps: 3, rivals: 11 },
-      versus: { track: 'vegas', laps: 3, rivals: 5, car2: 'mustang' },
+      versus: { track: 'vegas', laps: 3, rivals: 5, car2: 'kaito' },
     };
   };
 
@@ -47,6 +47,7 @@
   S.migrate = function (d) {
     const def = S.defaults();
     if (!d || typeof d !== 'object') return def;
+    S.renameCars(d);
     const out = Object.assign({}, def, d);
     out.settings = Object.assign({}, def.settings, d.settings || {});
     out.cups = def.cups.map((c, i) => Object.assign({}, c, (Array.isArray(d.cups) && d.cups[i]) || {}));
@@ -79,6 +80,26 @@
     out.money = Math.max(0, Math.round(+d.money || 0));
     if (!isFinite(out.money)) out.money = def.money;
     return out;
+  };
+
+  // saves from before the 2026-10 car lineup: move every car id to its new name
+  S.renameCars = function (d) {
+    const R = TG.CAR_RENAME || {};
+    const nid = (id) => R[id] || id;
+    if (d.cars && typeof d.cars === 'object') {
+      const cars = {};
+      Object.keys(d.cars).forEach((id) => {
+        const c = d.cars[id], n = nid(id);
+        // still in the old factory paint: take the new design's own colour (custom paint jobs are kept)
+        if (n !== id && c && TG.CAR_OLD_PAINT && c.color === TG.CAR_OLD_PAINT[n]) delete c.color;
+        cars[n] = c;
+      });
+      d.cars = cars;
+    }
+    if (typeof d.active === 'string') d.active = nid(d.active);
+    if (d.versus && typeof d.versus.car2 === 'string') d.versus.car2 = nid(d.versus.car2);
+    Object.values(d.records || {}).forEach((r) => { if (r && typeof r.lapCar === 'string') r.lapCar = nid(r.lapCar); });
+    Object.values(d.ghosts || {}).forEach((g) => { if (g && typeof g.car === 'string') g.car = nid(g.car); });
   };
 
   S.save = function (why) {

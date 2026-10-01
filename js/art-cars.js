@@ -187,7 +187,7 @@
         });
         break;
       }
-      case 'amg': {
+      case 'twinslim': {
         sides.forEach((sd) => {
           ctx.beginPath();
           ctx.moveTo(cx + sd * (bw2 * 0.4), yDeck + 34);
@@ -203,7 +203,7 @@
         ctx.beginPath(); ctx.moveTo(cx - bw2 * 0.38, yDeck + 40); ctx.lineTo(cx + bw2 * 0.38, yDeck + 40); ctx.stroke();
         break;
       }
-      case 'r8': {
+      case 'blade': {
         sides.forEach((sd) => {
           ctx.beginPath();
           ctx.moveTo(cx + sd * (bw2 * 0.3), yDeck + 28);
@@ -245,7 +245,7 @@
         });
         break;
       }
-      case 'veyron': {
+      case 'quadbar': {
         sides.forEach((sd) => {
           const x = cx + sd * (bw2 - 124), y = yDeck + 36;
           U.ellipse(ctx, x, y, 72, 15); lampFill(y - 15, y + 15);
@@ -254,7 +254,7 @@
         U.ellipse(ctx, cx, yDeck + 30, 40, 7); lampFill(yDeck + 23, yDeck + 37);
         break;
       }
-      case 'valk': {
+      case 'pods': {
         U.rr(ctx, cx - 96, yDeck - 4, 192, 9, 4); lampFill(yDeck - 4, yDeck + 5);
         sides.forEach((sd) => {
           U.rr(ctx, cx + sd * (bw2 - 24) - 5, yDeck + 20, 10, 64, 4); lampFill(yDeck + 20, yDeck + 84);
@@ -342,7 +342,7 @@
     const cv = U.canvas(W, H);
     const c = cv.getContext('2d');
     const id = model.id;
-    const style = /^(mustang|amggt|vantage)$/.test(id) ? 'grille' : id === 'p911' ? 'round' : /^(veyron|chiron)$/.test(id) ? 'bugatti' : id === 'gtr' ? 'gtr' : 'slim';
+    const style = (model.rear && model.rear.front) || 'slim';
     const k = W / 1000;
     c.scale(k, k);
     const HH = H / k;
@@ -367,7 +367,7 @@
       for (let x = 240; x < 780; x += 22) { c.beginPath(); c.moveTo(x, HH * 0.3); c.lineTo(x, HH * 0.9); c.stroke(); }
       c.restore();
       intake(70, HH * 0.6, 150, HH * 0.26, 18); intake(780, HH * 0.6, 150, HH * 0.26, 18);
-    } else if (style === 'bugatti') {
+    } else if (style === 'horseshoe') {
       // horseshoe grille
       c.fillStyle = '#c9ced6';
       c.beginPath(); c.ellipse(500, HH * 0.6, 95, HH * 0.36, 0, 0, Math.PI * 2); c.fill();
@@ -379,7 +379,7 @@
       intake(90, HH * 0.52, 240, HH * 0.34, 30); intake(670, HH * 0.52, 240, HH * 0.34, 30);
     } else {
       intake(110, HH * 0.56, 300, HH * 0.3, 26); intake(590, HH * 0.56, 300, HH * 0.3, 26);
-      if (style === 'gtr') { c.fillStyle = black; c.beginPath(); c.moveTo(390, HH * 0.4); c.lineTo(610, HH * 0.4); c.lineTo(560, HH * 0.8); c.lineTo(440, HH * 0.8); c.closePath(); c.fill(); }
+      if (style === 'hex') { c.fillStyle = black; c.beginPath(); c.moveTo(390, HH * 0.4); c.lineTo(610, HH * 0.4); c.lineTo(560, HH * 0.8); c.lineTo(440, HH * 0.8); c.closePath(); c.fill(); }
       else intake(430, HH * 0.62, 140, HH * 0.22, 16);
     }
     // headlights
@@ -622,7 +622,7 @@
       ctx.beginPath(); U.smoothShape(ctx, P(Sd.line), false);
       ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = S * 0.003; ctx.stroke();
       ctx.restore();
-      if (Sd.stripe && model.id === 'valkyrie') { ctx.beginPath(); U.smoothShape(ctx, P(Sd.line), false); ctx.strokeStyle = sec; ctx.lineWidth = S * 0.005; ctx.stroke(); }
+      if (Sd.stripe && Sd.stripeLine) { ctx.beginPath(); U.smoothShape(ctx, P(Sd.line), false); ctx.strokeStyle = sec; ctx.lineWidth = S * 0.005; ctx.stroke(); }
     }
 
     // side air intake

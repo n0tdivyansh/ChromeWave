@@ -1,0 +1,4 @@
+blender/out/
+blender/build_*.log
+dist/
+__pycache__/

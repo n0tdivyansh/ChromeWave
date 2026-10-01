@@ -222,7 +222,7 @@
       row('Speed', 'speed', speedTxt(st.top), st2 ? speedTxt(st2.top) : null) +
       row('0-100', 'accel', st.t0100.toFixed(1) + ' s', st2 ? st2.t0100.toFixed(1) + ' s' : null) +
       row('Handling', 'grip', grip(st) + '/100', st2 ? grip(st2) + '/100' : null) +
-      row('Nitro', 'nitro', st.nitroN + ' charges', st2 ? st2.nitroN + ' charges' : null) + '</div>';
+      row('Nitro', 'nitro', st.nitroTank.toFixed(1) + ' s tank', st2 ? st2.nitroTank.toFixed(1) + ' s tank' : null) + '</div>';
   }
   function adjRow(key, label, valueHtml, fn, extraCls) {
     return { html: '<div class="row ' + (extraCls || '') + '" data-nav data-key="' + key + '" data-adj="1"><span class="row-label">' + label + '</span><span class="row-val"><i class="arr" data-arrow="-1">◀</i><b class="row-b">' + valueHtml + '</b><i class="arr" data-arrow="1">▶</i></span></div>', key, fn };
@@ -332,7 +332,7 @@
       ];
       const utils = [
         ['garage', 'Garage', 'Your rides, tuning and detailing.'],
-        ['dealer', 'Showroom', 'Vellante, Corvani, Aurelle, Nordvik and more.'],
+        ['dealer', 'Showroom', 'Rovenza, Arvane, Lindqvist, Hoshida and more.'],
         ['options', 'Settings', 'Sound, graphics and controls.'],
       ];
       const all = modes.concat(utils);
@@ -697,7 +697,7 @@
   // Hangar layout (Garage / Showroom): car banner, then Specs / About / Actions panels
   function specPanel(st, extra) {
     const grip = Math.round(U.clamp((st.grip - 0.9) / 0.65, 0, 1) * 100);
-    return '<div class="hg-box hg-specs">' + [['Top speed', speedTxt(st.top)], ['0-100', st.t0100.toFixed(1) + ' s'], ['Handling', grip + '/100'], ['Nitro', st.nitroN + ' charges']]
+    return '<div class="hg-box hg-specs">' + [['Top speed', speedTxt(st.top)], ['0-100', st.t0100.toFixed(1) + ' s'], ['Handling', grip + '/100'], ['Nitro', st.nitroTank.toFixed(1) + ' s drift tank']]
       .map((x) => '<div><span>' + x[0] + '</span><b>' + x[1] + '</b></div>').join('') + (extra || '') + '</div>';
   }
   function hangar(ctx, o) {

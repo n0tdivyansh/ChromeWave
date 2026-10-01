@@ -1,8 +1,8 @@
 'use strict';
 /* ============================================================
-   WebGL 3D cars (models built in Blender: source/blender)
+   WebGL 3D cars (models built in Blender: blender/lp_build.py)
    ------------------------------------------------------------
-   · Decodes TG.CarModels (binary data packed into PNG).
+   · Decodes TG.CarModels (lp2: zlib-compressed mesh planes, see blender/lp_export.py).
    · Renders each car on an offscreen WebGL canvas and copies it onto
      the game's 2D canvas in place, with the same camera as Car3D (same
      screen position and size), so the rest of the game is unchanged.
@@ -20,8 +20,8 @@
 
   // Materials: [roughness, metal, clear coat, emission] · [color override, alpha, pattern, brake, headlight]
   const MAT = {
-    paint: [0.34, 0.0, 1.0, 0, 1, 1, 0, 0, 0],
-    sec: [0.34, 0.0, 1.0, 0, 2, 1, 0, 0, 0],
+    paint: [0.24, 0.0, 1.0, 0, 1, 1, 3, 0, 0],
+    sec: [0.26, 0.0, 1.0, 0, 2, 1, 3, 0, 0],
     plastic: [0.6, 0.0, 0.0, 0, 0, 1, 0, 0, 0],
     gloss: [0.16, 0.0, 0.8, 0, 0, 1, 0, 0, 0],
     chrome: [0.06, 1.0, 0.0, 0, 0, 1, 0, 0, 0],
@@ -42,9 +42,9 @@
     lensred: [0.02, 0.0, 1.0, 0.25, 0, 0.55, 0, 1.2, 0],
     // wing parts: hidden once it breaks off in a crash (pose.noWing)
     wingc: [0.28, 0.1, 1.0, 0, 0, 1, 2, 0, 0],
-    wingp: [0.34, 0.0, 1.0, 0, 1, 1, 0, 0, 0],
+    wingp: [0.24, 0.0, 1.0, 0, 1, 1, 3, 0, 0],
     wingk: [0.16, 0.0, 0.8, 0, 0, 1, 0, 0, 0],
-    wings: [0.34, 0.0, 1.0, 0, 2, 1, 0, 0, 0],
+    wings: [0.26, 0.0, 1.0, 0, 2, 1, 3, 0, 0],
     // fixed-color decoration paint (stripes, liveries, race numbers)
     livery: [0.34, 0.0, 1.0, 0, 0, 1, 0, 0, 0],
     wingl: [0.34, 0.0, 1.0, 0, 0, 1, 0, 0, 0],
@@ -115,6 +115,7 @@ varying vec3 vPos; varying vec3 vNrm; varying vec3 vAlb; varying float vAO; vary
 uniform vec3 uCam; uniform vec3 uSun; uniform vec3 uSunC; uniform vec3 uZen; uniform vec3 uHor; uniform vec3 uGnd; uniform vec3 uGndH;
 uniform vec3 uAmbC; uniform float uAmb; uniform float uFill; uniform float uStudio; uniform float uBrake; uniform float uHead;
 uniform float uExpo; uniform float uAlpha; uniform float uPass;
+float fhash(vec3 q) { return fract(sin(dot(q, vec3(12.9898, 78.233, 45.164))) * 43758.5453); }
 vec3 envRace(vec3 r, float rough) {
   float w = 0.015 + rough * 0.5;
   float t = smoothstep(-w, w, r.y);
@@ -146,7 +147,12 @@ void main() {
   vec3 alb = vAlb;
   float ao = vAO;
   float pat = vC.y;
-  if (pat > 0.5) {
+  float flake = 0.0;
+  if (pat > 2.5) {
+    // body paint: colour deepens toward the edges (lacquer "flop") and a fine metallic flake glints
+    alb *= mix(0.6, 1.0, pow(clamp(dot(N, V), 0.0, 1.0), 0.55));
+    flake = pow(fhash(floor(vLoc * 900.0)), 60.0) * (1.0 - rough);
+  } else if (pat > 0.5) {
     vec3 an = abs(N);
     vec2 uv = an.x > an.z ? (an.x > an.y ? vLoc.zy : vLoc.xz) : (an.z > an.y ? vLoc.xy : vLoc.xz);
     if (pat < 1.5) {
@@ -178,6 +184,7 @@ void main() {
   float Fc = 0.04 + 0.96 * pow(1.0 - NdV, 5.0);
   col = mix(col, env(R, 0.0) * sao, Fc * coat * 0.9);
   col += uSunC * pow(max(dot(N, H), 0.0), 900.0) * coat * 3.0 * sao;
+  col += uSunC * flake * pow(max(dot(N, H), 0.0), 24.0) * 1.2 * sao;   // flake glints only inside the highlight
   col += alb * emis * (1.0 + uBrake * vC.z + uHead * vC.w) * 1.8;
   col *= uExpo;
   col = (col * (2.51 * col + 0.03)) / (col * (2.43 * col + 0.59) + 0.14);
@@ -255,6 +262,13 @@ void main(){ vec2 q = abs(vQ); float d = max(q.x * 1.0, q.y); float a = (1.0 - s
      car when it's ready and CG.onReady when they all are. */
   CG.queue = [];
   let loading = 0, left = 0;
+  // A model record is {meta, z}: z = base64 of the zlib-compressed mesh planes (lp2, see
+  // blender/lp_export.py). Inflated with the browser's DecompressionStream.
+  async function unpack(rec) {
+    const bin = Uint8Array.from(atob(rec.z), (c) => c.charCodeAt(0));
+    return new Uint8Array(await new Response(new Blob([bin]).stream().pipeThrough(new DecompressionStream('deflate'))).arrayBuffer());
+  }
+
   function decode(id) {
     const rec = TG.CarModels.cars[id];
     loading++;
@@ -263,24 +277,11 @@ void main(){ vec2 q = abs(vQ); float d = max(q.x * 1.0, q.y); float a = (1.0 - s
       if (--left === 0) { CG.ready = true; if (CG.onReady) CG.onReady(); }
       setTimeout(pump, 16);
     };
-    const img = new Image();
-    img.onload = () => {
-      try {
-        const c = document.createElement('canvas');
-        c.width = img.width; c.height = img.height;
-        const x = c.getContext('2d', { willReadFrequently: true });
-        x.drawImage(img, 0, 0);
-        const px = x.getImageData(0, 0, img.width, img.height).data;
-        const n = rec.meta.bytes;
-        const bytes = new Uint8Array(n);
-        for (let i = 0, j = 0; i < n; j += 4) { bytes[i++] = px[j]; if (i < n) bytes[i++] = px[j + 1]; if (i < n) bytes[i++] = px[j + 2]; }
-        CG.cars[id] = build(rec.meta, bytes);
-        if (CG.onModel) CG.onModel(id);
-      } catch (e) { console.warn('Invalid car model ' + id, e); }
-      done();
-    };
-    img.onerror = done;
-    img.src = rec.png;
+    if (typeof DecompressionStream !== 'function') { done(); return; }   // no 3D model: the 2D car is drawn instead
+    unpack(rec)
+      .then((bytes) => { CG.cars[id] = build(rec.meta, bytes); if (CG.onModel) CG.onModel(id); })
+      .catch((e) => console.warn('Invalid car model ' + id, e))
+      .then(done);
   }
   function pump() {
     while (loading < 2 && CG.queue.length) decode(CG.queue.shift());
@@ -308,26 +309,18 @@ void main(){ vec2 q = abs(vQ); float d = max(q.x * 1.0, q.y); float a = (1.0 - s
     const names = TG.CarModels.mats;
     let off = 0;
     const meshes = meta.meshes.map((m) => {
+      // lp2 planes: pos 3 x uint16, normal 3 x int8, palette uint8, occlusion uint8, indices uint16|uint32
       const nv = m.nv, ni = m.ni;
-      const q = new Uint16Array(nv * 3);
-      for (let c = 0; c < 3; c++) {
-        let acc = 0;
-        for (let i = 0; i < nv; i++) { acc = (acc + (bytes[off + i] | (bytes[off + nv + i] << 8))) & 0xffff; q[i * 3 + c] = acc; }
-        off += nv * 2;
-      }
-      const ox = bytes.subarray(off, off + nv), oy = bytes.subarray(off + nv, off + nv * 2);
-      off += nv * 2;
+      const plane16 = () => { const a = new Uint16Array(bytes.slice(off, off + nv * 2).buffer); off += nv * 2; return a; };
+      const qx = plane16(), qy = plane16(), qz = plane16();
+      const nxs = new Int8Array(bytes.buffer, off, nv), nys = new Int8Array(bytes.buffer, off + nv, nv), nzs = new Int8Array(bytes.buffer, off + nv * 2, nv);
+      off += nv * 3;
       const pi = bytes.subarray(off, off + nv); off += nv;
       const ao = bytes.subarray(off, off + nv); off += nv;
-      const idx = new Uint32Array(ni);
-      let hw = 0;
-      for (let k = 0; k < ni; k++) {
-        const code = bytes[off + k] | (bytes[off + ni + k] << 8);
-        const i = hw - code;
-        idx[k] = i;
-        if (i === hw) hw++;
-      }
-      off += ni * 2;
+      const isz = m.idx32 ? 4 : 2;
+      const raw = bytes.slice(off, off + ni * isz).buffer;
+      const idx = m.idx32 ? new Uint32Array(raw) : Uint32Array.from(new Uint16Array(raw));
+      off += ni * isz;
       off = (off + 3) & ~3;
       // to car space (x, z up -> y, y forward -> z), units = car length
       const mir = !!m.mirror;
@@ -337,10 +330,8 @@ void main(){ vec2 q = abs(vQ); float d = max(q.x * 1.0, q.y); float a = (1.0 - s
       const s = [(m.qmax[0] - m.qmin[0]) / 65535, (m.qmax[1] - m.qmin[1]) / 65535, (m.qmax[2] - m.qmin[2]) / 65535];
       const mats = new Uint8Array(tot);
       for (let i = 0; i < nv; i++) {
-        const X = m.qmin[0] + q[i * 3] * s[0], Y = m.qmin[1] + q[i * 3 + 1] * s[1], Z = m.qmin[2] + q[i * 3 + 2] * s[2];
-        let nx = ((ox[i] << 24) >> 24) / 127, ny = ((oy[i] << 24) >> 24) / 127;
-        let nz = 1 - Math.abs(nx) - Math.abs(ny);
-        if (nz < 0) { const tx = nx; nx = (1 - Math.abs(ny)) * (tx >= 0 ? 1 : -1); ny = (1 - Math.abs(tx)) * (ny >= 0 ? 1 : -1); }
+        const X = m.qmin[0] + qx[i] * s[0], Y = m.qmin[1] + qy[i] * s[1], Z = m.qmin[2] + qz[i] * s[2];
+        let nx = nxs[i] / 127, ny = nys[i] / 127, nz = nzs[i] / 127;
         const nl = Math.hypot(nx, ny, nz) || 1;
         nx /= nl; ny /= nl; nz /= nl;
         const p = pal[pi[i]];

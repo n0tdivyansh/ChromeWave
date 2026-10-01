@@ -27,7 +27,7 @@
       backfire: 0, shiftPuff: 0, burn: 0, bumpSmoke: 0,
       dmg: { f: 0, r: 0, l: 0, rt: 0, roof: 0 }, dmgT: 0, flip: null, lostWing: false, brokenL: 0, scrapeT: 0, seed: Math.floor(Math.random() * 997),
       gear: 1, rpm: model.eng.idle, shiftT: 0,
-      nitroN: st.nitroN, nitroT: 0, fuel: 100,
+      nitroN: st.nitroN, nitroT: 0, nitroM: 0.34, driftGain: 0, fuel: 100,
       offroad: false, crashT: 0, bumpT: 0, slip: 0, air: 0, airV: 0, draft: 0, spinT: 0, perfect: false,
       lapStart: 0, lastLap: null, bestLap: null, laps: [],
       coins: 0, coinMoney: 0, crashes: 0, apLane: 0, apLaneT: 0,
@@ -193,7 +193,7 @@
       const I = TG.Input, p = car.profile;
       return {
         accel: I.action(p, 'accel'), brake: I.action(p, 'brake'), left: I.action(p, 'left'), right: I.action(p, 'right'),
-        nitro: I.hit(p, 'nitro'), up: I.hit(p, 'gearUp'), down: I.hit(p, 'gearDown'),
+        nitro: I.hit(p, 'nitro'), nitroHold: I.action(p, 'nitro'), up: I.hit(p, 'gearUp'), down: I.hit(p, 'gearDown'),
       };
     }
 
@@ -330,9 +330,11 @@
       if (car.finished && !car.autopilot) car.autopilot = true;
       if (car.flip) { this.stepFlip(car, dt); return; }
 
-      // nitro and manual gears
-      if (inp.nitro && car.nitroT <= 0 && car.nitroN > 0 && !car.finished) {
-        car.nitroN--; car.nitroT = st.nitroDur; this.emit('nitro', { car });
+      // nitro: drifting fills the tank (below); holding the nitro key burns it
+      if (inp.nitroHold && car.nitroM > 0 && !car.finished && (car.nitroT > 0 || car.nitroM >= 0.12)) {
+        if (car.nitroT <= 0) this.emit('nitro', { car });
+        car.nitroT = Math.max(car.nitroT, 0.12);
+        car.nitroM = Math.max(0, car.nitroM - dt / st.nitroTank);
       }
       const eng0 = car.model.eng;
       if (car.manual && !car.autopilot) {
@@ -373,6 +375,15 @@
       if (this.gripW < 1) slipT *= 1.15;
       car.slip = U.approach(car.slip, U.clamp(slipT, 0, 1), dt * (slipT > car.slip ? 5 : 2.5));
       if (car.slip > 0.3) car.speed -= car.slip * st.vmax * 0.035 * dt;
+      // drifting charges the nitro tank (not while boosting or off the road)
+      if (car.slip > 0.22 && sp > 0.35 && !car.offroad && car.nitroT <= 0 && !car.finished) {
+        const g = Math.min(1 - car.nitroM, car.slip * st.nitroFill * dt);
+        car.nitroM += g;
+        car.driftGain += g;
+      } else if (car.slip < 0.12 && car.driftGain > 0) {
+        if (car.driftGain > 0.03) this.emit('drift', { car, gain: car.driftGain });
+        car.driftGain = 0;
+      }
       car.offroad = Math.abs(car.x) > 1.0 + C.CAR_W * 0.25;
 
       // engine
@@ -765,7 +776,7 @@
           p.taken[car.pIndex] = car.lapsDone;
           if (p.type === 'coin') { car.coins++; car.coinMoney += this.coinValue; }
           else if (p.type === 'fuel') car.fuel = Math.min(100, car.fuel + 38);
-          else if (p.type === 'nitro') car.nitroN = Math.min(car.nitroN + 1, car.st.nitroN + 2);
+          else if (p.type === 'nitro') car.nitroM = Math.min(1, car.nitroM + 0.34);
           this.emit('pickup', { car, kind: p.type, value: p.type === 'coin' ? this.coinValue : 0 });
         }
       }

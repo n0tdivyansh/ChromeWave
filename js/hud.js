@@ -3,7 +3,7 @@
    Race HUD: retro digital dash
    - top center: race strip (position, lap, lap time, total, best, ghost)
    - bottom center: segmented LED rev bar, digital speed and gear
-   - bottom left: nitro bottles, fuel gauge and damage
+   - bottom left: nitro tank (filled by drifting), fuel gauge and damage
    - bottom right: neon minimap
    ============================================================ */
 (function (TG) {
@@ -176,24 +176,19 @@
   function tank(ctx, race, p, x, bottom, s, split) {
     const w = 230 * s, h = (race.demo ? 52 : 92) * s, y = bottom - h;
     plate(ctx, x, y, w, h, s);
-    // nitro bottles
-    txt(ctx, 'NITRO', x + 16 * s, y + 30 * s, font(700, 11 * s, F_DATA), MUTE);
-    const maxN = Math.max(p.st.nitroN, p.nitroN);
-    const bw = Math.min(16 * s, (w - 96 * s) / Math.max(1, maxN) - 5 * s), bh = 22 * s;
-    for (let i = 0; i < maxN; i++) {
-      const bx = x + 76 * s + i * (bw + 5 * s), by = y + 13 * s;
-      const full = i < p.nitroN;
-      ctx.fillStyle = full ? U.lin(ctx, 0, by, 0, by + bh, [0, NEON, 1, '#5a9fb0']) : 'rgba(255,255,255,0.1)';
-      if (full) glow(ctx, NEON, 6 * s);
-      U.rr(ctx, bx, by + 4 * s, bw, bh - 4 * s, 4 * s); ctx.fill();
-      ctx.fillRect(bx + bw * 0.3, by, bw * 0.4, 5 * s);
-      ctx.shadowBlur = 0;
+    // nitro tank: fills while drifting, drains while boosting
+    const drifting = p.driftGain > 0 && p.nitroT <= 0;
+    txt(ctx, 'NITRO', x + 16 * s, y + 30 * s, font(700, 11 * s, F_DATA), drifting ? NEON : MUTE);
+    const mx = x + 76 * s, my = y + 14 * s, mw = w - 92 * s, mh = 20 * s, k = U.clamp(p.nitroM || 0, 0, 1);
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    U.rr(ctx, mx, my, mw, mh, 4 * s); ctx.fill();
+    if (k > 0) {
+      ctx.fillStyle = p.nitroT > 0 ? '#bfe8ff' : U.lin(ctx, mx, 0, mx + mw, 0, [0, '#5a9fb0', 1, NEON]);
+      U.rr(ctx, mx, my, Math.max(6 * s, mw * k), mh, 4 * s); ctx.fill();
     }
-    if (p.nitroT > 0) {
-      const k = U.clamp(p.nitroT / p.st.nitroDur, 0, 1);
-      ctx.fillStyle = 'rgba(124,201,217,0.2)'; ctx.fillRect(x + 16 * s, y + 40 * s, w - 32 * s, 4 * s);
-      ctx.fillStyle = NEON; ctx.fillRect(x + 16 * s, y + 40 * s, (w - 32 * s) * k, 4 * s);
-    }
+    ctx.fillStyle = 'rgba(10,12,18,0.55)';
+    for (let i = 1; i < 3; i++) ctx.fillRect(mx + (mw * i) / 3 - 1 * s, my, 2 * s, mh);
+    if (drifting) txt(ctx, 'DRIFT', mx + mw - 4 * s, my - 3 * s, font(700, 9 * s, F_DATA), NEON, 'right');
     if (race.demo) return y;
     // segmented fuel gauge
     const low = p.fuel < 20;
