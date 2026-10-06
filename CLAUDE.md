@@ -1,9 +1,9 @@
-# Chromewave (repo: SpeedRush) — notes for Claude
+# ChromeWave (repo: ChromeWave) — notes for Claude
 
 Retro 80s pseudo-3D arcade racer (OutRun / Top Gear style). Plain JS, no npm, no libraries: classic
 scripts sharing `window.TG`, loaded in order by `index.html`. `node build.js dist/index.html` inlines
 everything into one self-contained file for upload (zip it as `dist/Chromewave-web.zip`).
-Repo: github.com/n0tdivyansh/SpeedRush.
+Repo: github.com/n0tdivyansh/ChromeWave.
 
 ## Run and test
 
