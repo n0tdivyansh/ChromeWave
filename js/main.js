@@ -4,7 +4,7 @@
    ============================================================ */
 (function (TG) {
   const U = TG.U;
-  const G = (TG.Game = { race: null, paused: false, last: 0, demoT: 0, skipRender: false, fpsAcc: 0, fpsN: 0 });
+  const G = (TG.Game = { race: null, paused: false, last: 0, demoT: 0, skipRender: false, fpsAcc: 0, fpsN: 0, races: 0 });
   const S = () => TG.Save.data;
 
   G.boot = function () {
@@ -43,6 +43,7 @@
     G.demoT = 0;
   };
   G.toDemo = function () {
+    TG.Portal.gameplay(false);
     TG.Audio.raceStop();
     G.startDemo();
     TG.Music.play('menu');
@@ -54,7 +55,12 @@
     else TG.UI.show('main', { focus });
   };
 
+  // between races a midgame ad may play (never before the first race); the race starts after it
   G.startRace = function (cfg) {
+    if (G.races++ === 0) { G.launchRace(cfg); return; }
+    TG.Portal.ad('midgame', () => G.launchRace(cfg));
+  };
+  G.launchRace = function (cfg) {
     TG.Audio.init();
     TG.Audio.raceStop();
     TG.UI.show('loading', { cfg });
@@ -69,6 +75,7 @@
         TG.UI.hide();
         TG.Music.play(race.theme.music || 'race1');
         TG.Audio.raceStart(race);
+        TG.Portal.gameplay(true);
       } catch (err) {
         console.error(err);
         G.skipRender = false;
@@ -88,22 +95,6 @@
     if (G.race) TG.Render.prepare(G.race);
   };
 
-  G.toggleFullscreen = function () {
-    try {
-      if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.tgApp) { window.webkit.messageHandlers.tgApp.postMessage('fullscreen'); return; }
-    } catch (e) { /* no native bridge */ }
-    const d = document;
-    const quiet = (p) => { if (p && p.catch) p.catch(() => TG.UI.toast('Your browser does not allow fullscreen here. Try F11.')); };
-    try {
-      if (!d.fullscreenElement && !d.webkitFullscreenElement) {
-        const el = d.documentElement;
-        quiet((el.requestFullscreen || el.webkitRequestFullscreen || function () {}).call(el));
-      } else {
-        quiet((d.exitFullscreen || d.webkitExitFullscreen || function () {}).call(d));
-      }
-    } catch (e) { /* not available */ }
-  };
-
   G.onKey = function (e, code) {
     const UI = TG.UI;
     if (UI.capture) return false;
@@ -114,28 +105,29 @@
       UI.toast(TG.Audio.musicMuted ? 'Music muted' : 'Music on');
       return true;
     }
-    if (code === 'F11' || (code === 'KeyF' && (e.metaKey || e.ctrlKey))) { G.toggleFullscreen(); return true; }
     const race = G.race;
     // skip the finish-line panoramic view
     if (race && !race.demo && !UI.cur && race.phase === 'done' && !race.ended && (code === 'Enter' || code === 'Space' || code === 'NumpadEnter')) { race.skipFin = true; return true; }
-    if (race && !race.demo && !UI.cur && (code === 'Escape' || code === 'KeyP')) { G.pause(); return true; }
+    if (race && !race.demo && !UI.cur && code === 'KeyP') { G.pause(); return true; }
     if (race && !race.demo && G.paused && UI.cur && UI.cur.name === 'pause' && code === 'KeyP') { G.resume(); return true; }
     return false;
   };
 
-  G.pause = function () {
+  G.pause = function (auto) {
     const race = G.race;
     if (!race || race.demo || G.paused || race.ended) return;
     G.paused = true;
+    if (!auto) TG.Portal.gameplay(false);   // not when the window just loses focus (CrazyGames rule)
     TG.Save.autosave('pause');
     TG.Audio.play('pause');
     TG.UI.show('pause');
   };
   G.autoPause = function () {
-    if (G.race && !G.race.demo && !G.paused && !TG.UI.cur && G.race.phase !== 'done') G.pause();
+    if (G.race && !G.race.demo && !G.paused && !TG.UI.cur && G.race.phase !== 'done') G.pause(true);
   };
   G.resume = function () {
     G.paused = false;
+    TG.Portal.gameplay(true);
     TG.UI.hide();
     TG.Input.down.clear();
   };
@@ -232,6 +224,7 @@
 
   /* ---------- Race end and economy ---------- */
   G.raceEnd = function (race) {
+    TG.Portal.gameplay(false);
     const d = S();
     const res = race.results();
     const data = { race, res, mode: race.mode, cup: race.cup, def: race.def };
@@ -286,6 +279,7 @@
             const done = rank <= 3 && ci === TG.CUPS.length - 1;
             cs.run = null;
             data.cupEnd = { cup: race.cup, table, rank, bonus, unlocked, done };
+            if (rank === 1) TG.Portal.happytime();   // cup won: the one big celebration
             data.cupRun = null;
           }
         }
@@ -374,10 +368,13 @@
     }
   };
 
-  window.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('DOMContentLoaded', async () => {
+    await TG.Portal.init();
+    TG.Portal.loadingStart();
     try { G.boot(); G.testHook(); } catch (err) {
       console.error(err);
       document.body.innerHTML = '<pre style="color:#fff;padding:24px;font:14px monospace">Startup error: ' + String(err && err.stack || err) + '</pre>';
     }
+    TG.Portal.loadingStop();
   });
 })(window.TG);

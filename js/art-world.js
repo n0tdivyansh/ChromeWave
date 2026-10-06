@@ -574,7 +574,7 @@
     { t: 'ZAPP!', sub: 'ENERGY DRINK', bg: ['#ffd23f', '#ff8a3d'], fg: '#2a0e4a' },
     { t: 'NEONFORGE', sub: 'CARBON PARTS', bg: ['#e8e4f4', '#b9b0d4'], fg: '#ff3c9e' },
     { t: 'HELIOS', sub: 'RACING FUEL', bg: ['#2a9d8f', '#1b5e56'], fg: '#ffd166' },
-    { t: 'SPEED RUSH', sub: 'OFFICIAL SERIES', bg: ['#1a1238', '#050310'], fg: '#ff3c9e' },
+    { t: 'CHROMEWAVE', sub: 'OFFICIAL SERIES', bg: ['#1a1238', '#050310'], fg: '#ff3c9e' },
   ];
   function board(I, idx) {
     const r = U.rng((U.hash(I.theme.id + 'bd' + idx) >>> 0));
@@ -717,7 +717,7 @@
       for (let x = 30; x < W; x += 170) c.fillRect(x, 70, 8, H - 70);
       c.fillStyle = I.t('#ff3c9e'); c.fillRect(0, H - 30, W, 14);
       c.fillStyle = I.t('#f4f4f4'); c.font = '400 14px "Press Start 2P", monospace'; c.textAlign = 'center';
-      c.fillText('SPEED RUSH · SPEED RUSH · SPEED RUSH · SPEED RUSH', W / 2, H - 16, W - 20);
+      c.fillText('CHROMEWAVE · CHROMEWAVE · CHROMEWAVE · CHROMEWAVE', W / 2, H - 16, W - 20);
     }); };
     return { img: mkStand(false), img2: mkStand(true), w: 7400, col: [[0, 1]], fps: 2.2 };
   }

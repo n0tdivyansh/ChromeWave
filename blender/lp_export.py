@@ -1,5 +1,5 @@
 '''
-Speed Rush — car model export ("lp2" format)
+Chromewave — car model export ("lp2" format)
 ============================================
 Turns a car built by lowpoly.py into the game's model data (js/car-models.js) and the
 2D-fallback data in js/data.js (side silhouette + rear panel description).

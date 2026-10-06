@@ -1,8 +1,8 @@
-# Speed Rush — notes for Claude
+# Chromewave (repo: SpeedRush) — notes for Claude
 
 Retro 80s pseudo-3D arcade racer (OutRun / Top Gear style). Plain JS, no npm, no libraries: classic
 scripts sharing `window.TG`, loaded in order by `index.html`. `node build.js dist/index.html` inlines
-everything into one self-contained file for upload (zip it as `dist/SpeedRush-web.zip`).
+everything into one self-contained file for upload (zip it as `dist/Chromewave-web.zip`).
 Repo: github.com/n0tdivyansh/SpeedRush.
 
 ## Run and test
@@ -83,6 +83,19 @@ burns the tank (`st.nitroTank` seconds when full) by keeping `car.nitroT` > 0, s
 `nitroT > 0` effect (speed, flames, FOV, audio) still applies. Blue canisters add 0.34. Stats in
 `TG.carStats`: `nitroTank`, `nitroFill` (nitro upgrade raises both). AI rivals still use timed charges
 (`ai.nitroN`). Pushing hard through corners fills about one full tank per lap.
+
+## Web portals (CrazyGames etc., 2026-10-01)
+
+The game was renamed from "Speed Rush" to **Chromewave** (distinct name; the save key stays `speedrush_v1` so
+old saves load). Portal rules already met: fonts bundled in `css/fonts.css` (no external requests), no custom
+fullscreen (the portal provides it), no Escape key (pause = P, menu back = Backspace), and the title screen's
+"Press Enter to race" starts an Arcade Race in one click ("Menu" opens the full menu).
+CrazyGames SDK v3 is wired through `js/portal.js` (`TG.Portal`; every call is a no-op off CrazyGames or when
+blocked): loading start/stop at boot, gameplayStart on race start/resume, gameplayStop on pause (not on focus
+loss), menus and race end, happytime on a cup win, a midgame ad between races (not before the first, at most
+every 3 min, `G.startRace` -> ad -> `G.launchRace`), a rewarded "double prize" on the results screen, audio muted
+during ads (`TG.Audio.adMute`), and saves in the SDK data module when available (`save.js` `store()`).
+On localhost the SDK runs in 'local' mode with demo ads. When submitting, enable the "Progress Save" toggle.
 
 ## Gotchas
 

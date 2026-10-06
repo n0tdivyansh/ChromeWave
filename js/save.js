@@ -6,6 +6,8 @@
   const U = TG.U;
   const KEY = 'speedrush_v1', BAK = KEY + '_bak';
   const S = (TG.Save = { data: null, last: '', lastT: 0 });
+  // CrazyGames data module when available (progress follows the player's account), else the browser
+  const store = () => (TG.Portal && TG.Portal.store) || localStorage;
 
   S.defaults = function () {
     return {
@@ -31,7 +33,7 @@
   };
   // Loads the most recent valid save (app disk, browser or backups)
   S.load = function () {
-    const get = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+    const get = (k) => { try { return store().getItem(k); } catch (e) { return null; } };
     const nat = () => { try { return window.__TG_NATIVE_SAVE; } catch (e) { return null; } };
     const natB = () => { try { return window.__TG_NATIVE_BAK; } catch (e) { return null; } };
     const main = [parse(nat()), parse(get(KEY))].filter(Boolean);
@@ -109,8 +111,8 @@
     try {
       // backup of the previous version (at most one per minute)
       const now = Date.now();
-      if (now - S.lastT > 60000) { const prev = localStorage.getItem(KEY); if (prev) localStorage.setItem(BAK, prev); }
-      localStorage.setItem(KEY, s);
+      if (now - S.lastT > 60000) { const prev = store().getItem(KEY); if (prev) store().setItem(BAK, prev); }
+      store().setItem(KEY, s);
     } catch (e) { /* storage not available */ }
     try {
       if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.tgSave) window.webkit.messageHandlers.tgSave.postMessage(s);
@@ -128,7 +130,7 @@
     return true;
   };
   // Export / import the save (to copy it to another browser or computer)
-  S.exportText = () => JSON.stringify(Object.assign({ game: 'Speed Rush' }, S.data), null, 1);
+  S.exportText = () => JSON.stringify(Object.assign({ game: 'Chromewave' }, S.data), null, 1);
   S.importText = function (text) {
     const d = parse(text);
     if (!d) return false;

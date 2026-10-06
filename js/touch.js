@@ -1,10 +1,10 @@
 /* ============================================================
-   Speed Rush · touch.js
+   Chromewave · touch.js
    On-screen controls for phones and tablets: a steering pad, gas,
    brake, nitro, gear buttons (manual gearbox only), pause, and a
    skip button for the finish-line view. They feed TG.Input's touch
    actions (player 1 / solo), so the race code needs no changes.
-   Menus: the "Esc" key hint is tappable and goes back.
+   Menus: the "Backspace" key hint is tappable and goes back.
    ============================================================ */
 (function (TG) {
   const T = (TG.Touch = { on: false });
@@ -74,7 +74,7 @@
     requestAnimationFrame(sync);
   }
 
-  // menus: the "Esc" hint works as a back button (touch or mouse)
+  // menus: the "Backspace" hint works as a back button (touch or mouse)
   document.addEventListener('click', (e) => {
     const h = e.target.closest && e.target.closest('.hints [data-back]');
     if (h && TG.UI.cur) TG.UI.back();

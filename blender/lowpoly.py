@@ -1,5 +1,5 @@
 '''
-Speed Rush — low-poly car builder (Blender 4.2+ / 5.x)
+Chromewave — low-poly car builder (Blender 4.2+ / 5.x)
 ======================================================
 Crisp, faceted cars in the retro-arcade style. A car is:
   · a body loft: closed rings of cross-section points, station by station

@@ -37,6 +37,12 @@
     if (TG.Music) TG.Music.onReady();
   };
 
+  // silence everything while a portal video ad plays
+  A.adMute = function (on) {
+    if (!A.ctx) return;
+    if (on) A.ctx.suspend();
+    else A.ctx.resume();
+  };
   A.apply = function () {
     if (!A.ready) return;
     const s = TG.Save.data.settings;

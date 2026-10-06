@@ -88,5 +88,5 @@
     if (I.labels[code]) return I.labels[code];
     return code;
   };
-  I.RESERVED = new Set(['Escape', 'KeyP', 'KeyM', 'Enter']);
+  I.RESERVED = new Set(['Backspace', 'KeyP', 'KeyM', 'Enter']);
 })(window.TG);

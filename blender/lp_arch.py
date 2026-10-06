@@ -1,5 +1,5 @@
 '''
-Speed Rush — low-poly archetypes and detail kit (used with lowpoly.py)
+Chromewave — low-poly archetypes and detail kit (used with lowpoly.py)
 ======================================================================
 make(d, kind, **o) turns a car's size and wheel positions into a lowpoly SPEC:
 body and cabin curves come from the archetype (mid-engine, front-engine GT,

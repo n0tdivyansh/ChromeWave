@@ -1,8 +1,7 @@
 /* ============================================================
-   SPEED RUSH — interface
+   CHROMEWAVE — interface
    Look: calm retro — dark slate, soft pink accent, cyan for data, pixel type (Press Start 2P / Silkscreen / VT323)
    ============================================================ */
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&family=VT323&display=block');
 :root {
   --carbon: #0e1016;
   --carbon-2: #161922;
@@ -780,4 +779,16 @@ html.touch .hints [data-back] { padding: 6px 10px; box-shadow: inset 0 0 0 2px r
   .ctl .keycap { flex: 1; min-width: 0; }
   .ctl-tabs { flex-wrap: wrap; }
   .tn-total { top: 12px; right: 14px; bottom: auto; }
+}
+
+/* title: the secondary "Menu" button under "Press Enter to race" */
+.press.press-menu { font-size: 0.6em; opacity: 0.75; margin-top: 0.8em; animation: none; }
+/* short screens (portal iframes down to 800x450): one row of mode tiles, compact hero, no ride card */
+@media (max-height: 540px) and (orientation: landscape) {
+  .mm-modes { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .mm-tile { min-height: 62px; padding: 8px 12px; }
+  .mm-tag { display: none; }
+  .mm-desc { font-size: 15px; margin-bottom: 4px; }
+  .mm-car { max-height: 30vh; }
+  .mm-hero { overflow: hidden; }
 }

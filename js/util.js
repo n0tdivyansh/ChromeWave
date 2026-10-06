@@ -1,6 +1,6 @@
 'use strict';
 /* ============================================================
-   SPEED RUSH — utilities
+   CHROMEWAVE — utilities
    ============================================================ */
 window.TG = window.TG || {};
 (function (TG) {

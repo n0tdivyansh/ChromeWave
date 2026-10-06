@@ -153,7 +153,7 @@
       case 'Enter': case 'NumpadEnter': case 'Space':
         if (f) { if (!f._silent) TG.Audio.play('select'); f.click(); }
         return true;
-      case 'Escape': case 'Backspace':
+      case 'Backspace':
         UI.back(); return true;
       default: return false;
     }
@@ -200,9 +200,9 @@
       '<h1>' + esc(title) + '</h1></div><div class="wallet"><span class="wallet-label">Balance</span><span class="wallet-val">' + money(S().money) + '</span></div></header>';
   }
   function hints(list) {
-    return '<footer class="hints">' + list.map((h) => '<span' + (h[0] === 'Esc' ? ' data-back' : '') + '><kbd' + (/[←↑→↓]/.test(h[0]) ? ' class="ar"' : '') + '>' + h[0] + '</kbd>' + esc(h[1]) + '</span>').join('') + '</footer>';
+    return '<footer class="hints">' + list.map((h) => '<span' + (h[0] === 'Backspace' ? ' data-back' : '') + '><kbd' + (/[←↑→↓]/.test(h[0]) ? ' class="ar"' : '') + '>' + h[0] + '</kbd>' + esc(h[1]) + '</span>').join('') + '</footer>';
   }
-  const HINTS = [['↑↓←→', 'Navigate'], ['Enter', 'Select'], ['Esc', 'Back']];
+  const HINTS = [['↑↓←→', 'Navigate'], ['Enter', 'Select'], ['Backspace', 'Back']];
   function speedTxt(kmh) {
     return S().settings.units === 'mph' ? Math.round(kmh * 0.6214) + ' mph' : Math.round(kmh) + ' km/h';
   }
@@ -291,11 +291,18 @@
     render(ctx) {
       ctx.el.innerHTML =
         '<div class="title-wrap">' +
-        '<div class="logo"><div class="logo-top">SPEED</div><div class="logo-main">RUSH</div>' +
+        '<div class="logo"><div class="logo-top">CHROME</div><div class="logo-main">WAVE</div>' +
         '</div>' +
-        '<button class="press" data-nav>Press <kbd>Enter</kbd> to play</button></div>' +
-        '<div class="title-foot"><span><kbd class="ar">↑↓←→</kbd> / <kbd>WASD</kbd> drive</span><span><kbd>Space</kbd> nitro</span><span><kbd>Esc</kbd> pause</span><span><kbd>M</kbd> music</span></div>';
+        '<button class="press" data-nav>Press <kbd>Enter</kbd> to race</button>' +
+        '<button class="press press-menu" data-nav>Menu</button></div>' +
+        '<div class="title-foot"><span><kbd class="ar">↑↓←→</kbd> / <kbd>WASD</kbd> drive</span><span><kbd>Space</kbd> nitro</span><span><kbd>P</kbd> pause</span><span><kbd>M</kbd> music</span></div>';
+      // one click straight into a race (the Arcade Race setup and the player's car)
       $('.press', ctx.el).addEventListener('click', () => {
+        const q = S().quick;
+        TG.Audio.init();
+        TG.Game.startRace({ mode: 'quick', trackId: q.track, laps: q.laps, rivals: q.rivals, players: [carCfg(S().active, 'solo', 'You')] });
+      });
+      $('.press-menu', ctx.el).addEventListener('click', () => {
         TG.Audio.init();
         TG.Music.play('menu');
         UI.show('main');
@@ -315,7 +322,6 @@
     shop: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3"/><path d="M1 14h6M9 8h6M17 16h6"/>',
     paint: '<path d="M12 2.7S5 10.7 5 15a7 7 0 0 0 14 0c0-4.3-7-12.3-7-12.3z"/>',
     keys: '<rect x="2.5" y="6" width="19" height="12" rx="1"/><path d="M6 10h1M10 10h1M14 10h1M18 10h1M7 14h10"/>',
-    full: '<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/>',
     export: '<path d="M12 15V3M7 8l5-5 5 5M4 15v5h16v-5"/>',
     import: '<path d="M12 3v12M7 10l5 5 5-5M4 15v5h16v-5"/>',
     trash: '<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/>',
@@ -340,7 +346,7 @@
       const st = TG.carStats(model, car.up);
       const d = S();
       ctx.el.innerHTML =
-        '<header class="mm-top"><div class="mm-logo"><span>Speed</span><b>Rush</b></div>' +
+        '<header class="mm-top"><div class="mm-logo"><span>Chrome</span><b>wave</b></div>' +
         '<div class="mm-wallet"><small>Balance</small><b>' + money(d.money) + '</b></div></header>' +
         '<section class="mm-hero">' +
           '<div class="mm-pitch"><div class="mm-kicker"></div><h1 class="mm-title"></h1><p class="mm-desc"></p>' +
@@ -354,7 +360,7 @@
           '<button class="mm-tile" data-nav data-key="' + m[0] + '"><span class="mm-num">0' + (i + 1) + '</span>' + icon(m[0]) + '<span class="mm-name">' + m[1] + '</span></button>').join('') + '</nav>' +
         '<nav class="mm-utils">' + utils.map((m) =>
           '<button class="mm-util" data-nav data-key="' + m[0] + '">' + icon(m[0]) + '<span>' + m[1] + '</span></button>').join('') + '</nav>' +
-        hints([['↑↓←→', 'Navigate'], ['Enter', 'Select'], ['Esc', 'Title screen']]);
+        hints([['↑↓←→', 'Navigate'], ['Enter', 'Select'], ['Backspace', 'Title screen']]);
       all.forEach((it) => $('[data-key="' + it[0] + '"]', ctx.el).addEventListener('click', () => UI.show(it[0])));
       showroomInto($('.mm-car', ctx.el), model, car.color, car.det);
       // the hero text follows whichever option is highlighted
@@ -405,7 +411,7 @@
         '<div class="wt"><div class="hg-box wt-prev"></div><div class="wt-list">' + TG.CUPS.map((cup, i) =>
           '<button class="wt-cup' + (i >= d.unlocked ? ' locked' : '') + '" data-nav data-key="cup' + i + '" data-i="' + i + '"><span class="wt-n">' + String(i + 1).padStart(2, '0') + '</span>' +
           '<span class="flag-slot"></span><span class="wt-cn">' + esc(cup.name) + '</span>' + status(i) + '</button>').join('') + '</div></div>' +
-        hints([['↑↓', 'Choose cup'], ['Enter', 'Open'], ['Esc', 'Back']]);
+        hints([['↑↓', 'Choose cup'], ['Enter', 'Open'], ['Backspace', 'Back']]);
       fill();
       $$('.wt-cup', ctx.el).forEach((b) => {
         const i = +b.dataset.i;
@@ -504,7 +510,7 @@
         '<div class="hg-box hg-act"><button class="btn primary big" data-nav data-key="go">' + (run ? 'Continue' : 'Start cup') + '</button><div class="cup-nexttrack">' + esc(next.name) + '</div>' +
         (run ? '<button class="btn ghost" data-nav data-key="reset">Restart cup</button>' : '') +
         '<button class="btn ghost" data-nav data-key="garage">Go to garage</button></div></div></div>' +
-        hints([['↑↓', 'Navigate'], ['←→', 'Change car'], ['Enter', 'Select'], ['Esc', 'Back']]);
+        hints([['↑↓', 'Navigate'], ['←→', 'Change car'], ['Enter', 'Select'], ['Backspace', 'Back']]);
       bindAdj(ctx.el, [pick]);
       $$('.rc-thumb', ctx.el).forEach((c) => thumbInto(c, c.dataset.theme));
       $('[data-key="go"]', ctx.el).addEventListener('click', () => {
@@ -602,7 +608,7 @@
       ctx.el.innerHTML = header(o.title, 'Step 1 of 2 · Choose a cup') +
         '<div class="pick">' + carousel('cups', cupCard(wrap(i - 1, n), false), cupCard(i, true), cupCard(wrap(i + 1, n), false), dots) +
         '<button class="btn primary big pick-go" data-nav data-key="next"' + (locked ? ' data-off' : '') + '>' + (locked ? 'Locked' : 'Choose cup') + '</button></div>' +
-        hints([['←→', 'Change cup'], ['Enter', 'Choose'], ['Esc', 'Back']]);
+        hints([['←→', 'Change cup'], ['Enter', 'Choose'], ['Backspace', 'Back']]);
       const choose = () => {
         if (i >= S().unlocked) { TG.Audio.play('error'); UI.toast('Cup locked: finish on the podium in the ' + TG.CUPS[i - 1].name + '.', 'warn'); return; }
         if (TG.TRACKS[q.track].cup !== i) q.track = TG.CUPS[i].tracks[0].id;
@@ -624,7 +630,7 @@
         list.map((x) => '<i class="' + (x === t ? 'on' : '') + '"></i>').join('')) +
       '<div class="chips">' + rows.map((r) => r.html).join('') + '<button class="btn primary big" data-nav data-key="go">' + o.goLabel + '</button></div>' +
       (o.extra ? '<div class="pick-extra">' + o.extra(q, cup) + '</div>' : '') + '</div>' +
-      hints([['↑↓', 'Select'], ['←→', 'Change'], ['Enter', 'Race'], ['Esc', 'Cups']]);
+      hints([['↑↓', 'Select'], ['←→', 'Change'], ['Enter', 'Race'], ['Backspace', 'Cups']]);
     bindAdj(ctx.el, rows);
     const go = $('[data-key="go"]', ctx.el);
     wireCarousel(ctx, 'track', (d) => { q.track = list[wrap(ti + d, list.length)].id; TG.Save.save(); UI.refresh('[data-key="track"]'); }, () => UI.focus(go));
@@ -707,7 +713,7 @@
       (n > 1 ? '<i class="arr hg-l" data-arrow="-1">◀</i><i class="arr hg-r" data-arrow="1">▶</i>' : '') +
       '<div class="hg-name"><span>' + esc(o.model.brand) + ' · No. ' + (TG.CARS.indexOf(o.model) + 1) + '</span><b>' + esc(o.model.name) + '</b></div></div>' +
       '<div class="hg-row">' + o.specs + '<div class="hg-box hg-about"><span>About</span><p>' + esc(o.model.desc) + '</p></div><div class="hg-box hg-act">' + o.actions + '</div></div></div>' +
-      hints([['←→', 'Change car'], ['↑↓', 'Navigate'], ['Enter', 'Select'], ['Esc', 'Back']]);
+      hints([['←→', 'Change car'], ['↑↓', 'Navigate'], ['Enter', 'Select'], ['Backspace', 'Back']]);
     const ban = $('[data-key="car"]', ctx.el);
     ban._silent = true;
     ban._adjust = (d) => { if (n > 1) { o.pick(ids[(i + d + n) % n]); UI.refresh('[data-key="car"]'); } };
@@ -783,7 +789,7 @@
         '<div class="tn"><div class="hg-ban tn-ban"><canvas class="hg-car"></canvas><div class="hg-name"><span>' + esc(model.brand) + '</span><b>' + esc(model.name) + '</b></div>' +
         '<div class="tn-total"><span>Upgrades</span><b>' + lvTot + '/' + maxTot + '</b></div></div>' +
         '<div class="tn-row"><div class="tn-parts">' + UPS.map(tile).join('') + '</div><div class="hg-box tn-info">' + info(foc) + '</div></div></div>' +
-        hints([['↑↓←→', 'Choose part'], ['Enter', 'Install'], ['Esc', 'Back']]);
+        hints([['↑↓←→', 'Choose part'], ['Enter', 'Install'], ['Backspace', 'Back']]);
       showroomInto($('.hg-car', ctx.el), model, car.color, car.det);
       UPS.forEach((u) => {
         const b = $('[data-key="' + u.id + '"]', ctx.el);
@@ -846,7 +852,7 @@
         '<div class="hg-box det-box"><span>Finish</span>' + finish.map((r) => r.html).join('') + '<p class="small muted">Detailing is free. Every change shows live on the car.</p></div>' +
         '<div class="hg-box hg-act"><button class="btn primary big" data-nav data-key="apply">Apply</button>' +
         '<button class="btn ghost" data-nav data-key="reset">Reset to factory</button><button class="btn ghost" data-nav data-key="cancel">Cancel</button></div></div></div>' +
-        hints([['↑↓', 'Select'], ['←→', 'Change'], ['Enter', 'Confirm'], ['Esc', 'Cancel']]);
+        hints([['↑↓', 'Select'], ['←→', 'Change'], ['Enter', 'Confirm'], ['Backspace', 'Cancel']]);
       bindAdj(ctx.el, colours.concat(finish));
       showroomInto($('.hg-car', ctx.el), model, dr.color, dr.det);
       $('[data-key="apply"]', ctx.el).addEventListener('click', () => {
@@ -925,7 +931,7 @@
     } catch (e) { /* browser */ }
     const a = document.createElement('a');
     const d = new Date();
-    a.download = 'SpeedRush-save-' +d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + '.json';
+    a.download = 'Chromewave-save-' +d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0') + '.json';
     a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 4000);
@@ -948,7 +954,7 @@
   }
   UI.importDone = function (ok) {
     if (ok) { UI.toast('Save imported successfully.', 'ok'); UI.refresh(); }
-    else UI.toast('That file is not a valid Speed Rush save.', 'warn');
+    else UI.toast('That file is not a valid Chromewave save.', 'warn');
   };
 
   /* ---------- Settings: Sound / Display / Race panels, a tip line for the focused item, action tiles ---------- */
@@ -979,7 +985,6 @@
         difficulty: 'Rivals get a little better with every World Tour race; this sets where they start.',
         trans: 'Manual: shift up near the rev limiter (the gear flashes) to gain acceleration.',
         controls: 'Change the keys for solo play and for both Head to Head players.',
-        full: 'Fill the whole screen. Press Esc to leave fullscreen.',
         export: 'Progress saves automatically. Export a copy to move it to another browser or computer.',
         import: 'Load a save file you exported earlier. It replaces your current progress.',
         reset: 'Deletes your money, cars, upgrades, cups and records. This cannot be undone.',
@@ -987,16 +992,15 @@
       const R = {};
       rows.forEach((r) => { R[r.key] = r.html; });
       const box = (title, keys) => '<div class="hg-box set-box"><span>' + title + '</span>' + keys.map((k) => R[k]).join('') + '</div>';
-      const tiles = [['controls', 'keys', 'Controls'], ['full', 'full', 'Fullscreen'], ['export', 'export', 'Export save'], ['import', 'import', 'Import save'], ['reset', 'trash', 'Delete save']];
+      const tiles = [['controls', 'keys', 'Controls'], ['export', 'export', 'Export save'], ['import', 'import', 'Import save'], ['reset', 'trash', 'Delete save']];
       ctx.el.innerHTML = header('Settings', 'Sound · display · race · save') +
         '<div class="setv"><div class="set-cols">' + box('Sound', ['music', 'sfx']) + box('Display', ['quality', 'camera', 'units', 'fps']) + box('Race', ['difficulty', 'trans']) + '</div>' +
         '<div class="set-tip"><span>Tip</span><p>' + TIPS.music + '</p></div>' +
         '<div class="set-tiles">' + tiles.map((t) => '<button class="hg-tile' + (t[0] === 'reset' ? ' danger' : '') + '" data-nav data-key="' + t[0] + '">' + icon(t[1]) + '<b>' + t[2] + '</b></button>').join('') + '</div></div>' +
-        hints([['↑↓', 'Navigate'], ['←→', 'Change'], ['Enter', 'Select'], ['Esc', 'Back']]);
+        hints([['↑↓', 'Navigate'], ['←→', 'Change'], ['Enter', 'Select'], ['Backspace', 'Back']]);
       bindAdj(ctx.el, rows);
       ctx.onFocus = (el) => { const tip = TIPS[el.dataset.key]; if (tip) $('.set-tip p', ctx.el).textContent = tip; };
       $('[data-key="controls"]', ctx.el).addEventListener('click', () => UI.show('controls', { back: ctx.params.back }));
-      $('[data-key="full"]', ctx.el).addEventListener('click', () => TG.Game.toggleFullscreen());
       $('[data-key="export"]', ctx.el).addEventListener('click', exportSave);
       $('[data-key="import"]', ctx.el).addEventListener('click', importSave);
       $('[data-key="reset"]', ctx.el).addEventListener('click', () => UI.modal('<h2>Delete all progress?</h2><p>You will lose your money, cars, upgrades, cups and records. This cannot be undone.</p>', [
@@ -1022,11 +1026,11 @@
           return '<div class="krow"><span>' + I.ACTION_LABEL[a] + '</span><div class="kcells">' + cells + '</div></div>';
         }).join('') + '</div>' +
         '<div class="hg-box ctl-side"><span>Always</span>' +
-        '<div class="krow fixed"><span>Pause</span><div class="kcells"><span class="keycap static">Esc / P</span></div></div>' +
+        '<div class="krow fixed"><span>Pause</span><div class="kcells"><span class="keycap static">P</span></div></div>' +
         '<div class="krow fixed"><span>Mute music</span><div class="kcells"><span class="keycap static">M</span></div></div>' +
         '<p class="small muted">' + (slots > 1 ? 'Solo play has two keys per action, so you can drive with the arrows or with WASD.' : 'In Head to Head each player has one key per action. Keys can\'t be shared between players.') + '</p>' +
         '<button class="btn ghost" data-nav data-key="defaults">Restore default keys</button></div></div></div>' +
-        hints([['↑↓←→', 'Navigate'], ['Enter', 'Change key'], ['Esc', 'Back']]);
+        hints([['↑↓←→', 'Navigate'], ['Enter', 'Change key'], ['Backspace', 'Back']]);
       I.PROFILES.forEach((p) => $('[data-key="tab_' + p + '"]', ctx.el).addEventListener('click', () => { ctx.prof = p; UI.refresh('[data-key="tab_' + p + '"]'); }));
       $$('.keycap[data-a]', ctx.el).forEach((b) => b.addEventListener('click', () => {
         const a = b.dataset.a, s = +b.dataset.s;
@@ -1034,7 +1038,7 @@
         b.textContent = 'Press a key…';
         UI.capture = (code) => {
           UI.capture = null;
-          if (code === 'Escape') { TG.Audio.play('back'); UI.refresh('[data-key="k_' + a + '_' + s + '"]'); return true; }
+          if (code === 'Backspace') { TG.Audio.play('back'); UI.refresh('[data-key="k_' + a + '_' + s + '"]'); return true; }
           if (I.RESERVED.has(code) && code !== 'Enter') { TG.Audio.play('error'); UI.toast('That key is reserved (pause or music).', 'warn'); UI.refresh('[data-key="k_' + a + '_' + s + '"]'); return true; }
           const prof = S().keys[ctx.prof];
           I.ACTIONS.forEach((a2) => prof[a2].forEach((kk, j) => { if (kk === code) prof[a2][j] = ''; }));
@@ -1102,7 +1106,7 @@
       ctx.el.innerHTML = '<div class="pz"><div class="pz-head"><span>' + esc(race ? race.def.name : '') + '</span><h1>Paused</h1></div>' +
         (facts.length ? '<div class="pz-facts">' + facts.map((f) => '<div><span>' + f[0] + '</span><b>' + f[1] + '</b></div>').join('') + '</div>' : '') +
         '<div class="pz-menu">' + items.map((it) => '<button class="pz-btn' + (it[0] === 'quit' ? ' quit' : '') + '" data-nav data-key="' + it[0] + '">' + it[1] + '</button>').join('') + '</div>' +
-        '<div class="pz-keys"><kbd>Esc</kbd> resume · <kbd>M</kbd> music</div></div>';
+        '<div class="pz-keys"><kbd>P</kbd> resume · <kbd>M</kbd> music</div></div>';
       $('[data-key="resume"]', ctx.el).addEventListener('click', () => TG.Game.resume());
       $('[data-key="restart"]', ctx.el).addEventListener('click', () => TG.Game.restart());
       $('[data-key="opts"]', ctx.el).addEventListener('click', () => UI.show('options', { back: () => UI.show('pause') }));
@@ -1165,6 +1169,7 @@
       ctx.el.innerHTML = header(title, d.def.name + ' · ' + d.cup.name) +
         '<div class="resv">' + top + '<div class="hg-row' + (mode === 'time' ? ' two' : '') + '">' + boxes +
         '<div class="hg-box hg-act">' + cupInfo +
+        (e && e.total > 0 && TG.Portal.on && !TG.Portal.noAds ? '<button class="btn primary" data-nav data-key="double">Watch an ad: double prize (+' + money(e.total) + ')</button>' : '') +
         '<button class="btn primary big" data-nav data-key="next">' + (d.cupEnd ? 'Final standings' : d.cupRun ? 'Next race' : 'Continue') + '</button>' +
         (!d.cupRun && !d.cupEnd ? '<button class="btn ghost" data-nav data-key="again">Race again</button>' : '') +
         '<button class="btn ghost" data-nav data-key="menu">Main menu</button></div></div></div>';
@@ -1181,6 +1186,20 @@
         if (d.cupEnd) UI.show('cupEnd', d.cupEnd);
         else if (d.cupRun) { TG.Game.toDemo(); UI.show('cup', { i: d.cup.index }); }
         else TG.Game.backToMenu(mode);
+      });
+      const dbl = $('[data-key="double"]', ctx.el);
+      if (dbl) dbl.addEventListener('click', () => {
+        dbl.disabled = true;
+        TG.Portal.ad('rewarded', (ok) => {
+          if (!ok) { dbl.disabled = false; UI.toast('No ad available right now. Try again in a moment.'); return; }
+          S().money += e.total;
+          S().stats.earned += e.total;
+          TG.Save.save();
+          dbl.remove();
+          $$('.erow.bal b, .wallet-val', ctx.el).forEach((b) => { b.textContent = money(S().money); });
+          UI.toast('Prize doubled: +' + money(e.total));
+          UI.focus($('[data-key="next"]', ctx.el), true);
+        });
       });
       const ag = $('[data-key="again"]', ctx.el);
       if (ag) ag.addEventListener('click', () => TG.Game.startRace(d.race.cfg));
@@ -1203,7 +1222,7 @@
         '<div class="erow total"><span>Cup bonus</span><b>' + money(d.bonus) + '</b></div>' +
         '<div class="erow bal"><span>Balance</span><b>' + money(S().money) + '</b></div>' +
         (d.unlocked ? '<div class="unlock"><span>New cup unlocked</span><b>' + esc(d.unlocked) + '</b></div>' : '') +
-        (d.done ? '<div class="unlock gold"><span>World Tour complete</span><b>Speed Rush Legend!</b></div>' : '') + '</div>' +
+        (d.done ? '<div class="unlock gold"><span>World Tour complete</span><b>Chromewave Legend!</b></div>' : '') + '</div>' +
         '<div class="hg-box hg-act">' + (d.rank > 3 ? '<p class="warn-txt">You need a top-3 finish to unlock the next cup. Upgrade your car and try again.</p>' : '') +
         '<button class="btn primary big" data-nav data-key="ok">Continue</button></div></div></div>';
       if (d.rank <= 3) TG.Audio.play('trophy');

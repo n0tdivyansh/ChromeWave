@@ -1,5 +1,5 @@
 '''
-Speed Rush — preview renders of a built car (EEVEE): a neutral studio, a few camera angles
+Chromewave — preview renders of a built car (EEVEE): a neutral studio, a few camera angles
 and a contact sheet. render_views(S, path, views) -> path + '.png'.
 Views: 'rear34', 'front34', 'side', 'rear', 'front', 'top', 'chase' (in-game angle).
 '''
